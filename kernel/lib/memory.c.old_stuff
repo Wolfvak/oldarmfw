@@ -1,0 +1,33 @@
+#include <common.h>
+
+void *
+memset(void *a, int c, size_t n)
+{
+	uint8_t *b = a;
+	while(n--) *(b++) = c;
+	return a;
+}
+
+void *
+memcpy(void *restrict a, const void *restrict b, size_t n)
+{
+	uint8_t *c = a;
+	const uint8_t *d = b;
+	while(n--) *(c++) = *(d++);
+	return a;
+}
+
+char *
+strcpy(char *s1, const char *s2)
+{
+	char *ret = s1;
+
+	while(1) {
+		char a = *(s2++);
+		(*s1++) = a;
+		if (a == '\0')
+			break;
+	}
+
+	return ret;
+}
