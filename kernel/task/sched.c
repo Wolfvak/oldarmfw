@@ -6,15 +6,16 @@
 
 #include <lib/cq.h>
 
-static sched_task *activetsk;
+sched_task *sched_active;
+int sched_taskn;
 
-static int taskcnt;
 static cq_n *runq;
 
-void load_sys_ctx(const cpuctx_t *ctx);
+void load_usr_ctx(const cpuctx_t *ctx);
 
 void
-task_init(sched_task *t, uint32_t *sp, uint32_t pc, const char *name) {
+task_init(sched_task *t, uint32_t *sp, uint32_t pc, const char *name)
+{
 	cpuctx_init(&t->cpu_state, (uint32_t)sp, pc, SR_SYS);
 	t->name = name;
 	t->state = TASK_AWAKE;
@@ -24,9 +25,9 @@ task_init(sched_task *t, uint32_t *sp, uint32_t pc, const char *name) {
 void
 sched_init(sched_task *ktask)
 {
-	taskcnt = 1;
+	sched_taskn = 1;
 
-	activetsk = ktask;
+	sched_active = ktask;
 	runq = &ktask->node;
 }
 
@@ -34,7 +35,14 @@ void
 sched_add(sched_task *t)
 {
 	cq_add(&t->node, runq);
-	taskcnt++;
+	sched_taskn++;
+}
+
+void
+sched_del(sched_task *t)
+{
+	cq_remove(&t->node);
+	sched_taskn--;
 }
 
 void
@@ -46,11 +54,11 @@ sched_run(void)
 		if (task_node == runq)
 			sleepcnt = 0;
 
-		activetsk = CQ_DATA(task_node, sched_task, node);
+		sched_active = CQ_DATA(task_node, sched_task, node);
 
-		switch(activetsk->state) {
+		switch(sched_active->state) {
 			case TASK_AWAKE:
-				load_sys_ctx(&activetsk->cpu_state);
+				load_usr_ctx(&sched_active->cpu_state);
 				break;
 
 			case TASK_WAIT:
@@ -59,11 +67,11 @@ sched_run(void)
 
 			default:
 				/* break up mid-flight */
-				bkpt();
+				breakup();
 				break;
 		}
 
-		if (sleepcnt == taskcnt) {
+		if (sleepcnt == sched_taskn) {
 			/*
 			 * all tasks are sleeping
 			 * wait for interrupt
@@ -76,29 +84,4 @@ sched_run(void)
 			int_disable();
 		}
 	}
-}
-
-sched_task *
-sched_active_task(void)
-{
-	return activetsk;
-}
-
-const char *
-sched_active_name(void)
-{
-	return activetsk->name;
-}
-
-int
-sched_taskcnt(void)
-{
-	return taskcnt;
-}
-
-/** FOR INTERNAL USE ONLY */
-cpuctx_t *
-sched_active_cpuctx(void)
-{
-	return &activetsk->cpu_state;
 }

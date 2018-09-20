@@ -3,11 +3,10 @@
 .align 2
 .arm
 
-.section .text.reloc
+#define SVC_STACK_SIZE	(2048)
+#define IRQ_STACK_SIZE	(2048)
 
-.global _start_reloc
-.type _start_reloc, %function
-_start_reloc:
+ARM_FUNC reloc
 	@ Disable any processor interrupts
 	msr cpsr_c, #(SR_SVC | SR_NOINT)
 
@@ -88,24 +87,25 @@ _start_reloc:
 		strne r2, [r0], #4
 		bne 1b
 
+
 	@ Setup stacks
 	msr cpsr_c, #(SR_IRQ | SR_NOINT)
-	ldr sp, =_irq_stk
+	ldr sp, =(_irq_stk + IRQ_STACK_SIZE)
 
 	msr cpsr_c, #(SR_SVC | SR_NOINT)
-	ldr sp, =_svc_stk
+	ldr sp, =(_svc_stk + SVC_STACK_SIZE)
 
-	@ Branch to code start
-	ldr pc, =kmain
+	@ Branch to low level hardware initialization
+	ldr pc, =ll_init
 
 @ void copy_section(void *sect_lma, void *sect_addr, void *sect_end)
-@ addresses must be aligned to 64 bytes
+@ addresses must be aligned to 16 bytes
 copy_section:
 	cmp r1, r2
-	bxeq lr
+	bxeq lr	@ intentionally 'eq' to catch unaligned pointers
 
-	ldmia r0!, {r3-r10}
-	stmia r1!, {r3-r10}
+	ldmia r0!, {r3-r6}
+	stmia r1!, {r3-r6}
 	b copy_section
 
 _mpu_regions:
@@ -117,16 +117,16 @@ _mpu_regions:
     .word MPU_REGION(0x20000000, MPU_SZ_256M)	@ FCRAM
     .word MPU_REGION(0x40000000, MPU_SZ_16K)	@ DTCM
     .word MPU_REGION(0xFFFF0000, MPU_SZ_64K)	@ BootROM
-
 .pool
 
 
-.section .bss.stacks
-.align 3
-.space (512 * 4)
-_irq_stk:
-.global _irq_stk
+ARM_FUNC ll_init
+	bl irq_init
+	bl pxi_init
 
-.space (256 * 4)
-_svc_stk:
-.global _svc_stk
+	mov lr, #0
+	b kmain
+
+
+BSS_DATA _irq_stk, IRQ_STACK_SIZE, 3
+BSS_DATA _svc_stk, SVC_STACK_SIZE, 3

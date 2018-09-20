@@ -6,7 +6,7 @@
 #define NR_IRQS	(29)
 #define REG_IRQ	((volatile uint32_t*)0x10001000)
 
-static irq_cb callbacks[NR_IRQS];
+irq_cb callbacks[NR_IRQS];
 
 void
 irq_init(void)
@@ -16,35 +16,32 @@ irq_init(void)
 	memset(callbacks, 0, sizeof(callbacks));
 }
 
-int
+void
 irq_enable(int irq, irq_cb cb)
 {
 	if (irq < 0 || irq >= NR_IRQS)
-		return -1;
+		breakup();
 
 	REG_IRQ[1] = BIT(irq);
 	REG_IRQ[0] |= BIT(irq);
 	callbacks[irq] = cb;
-	return 0;
 }
 
-int
+void
 irq_disable(int irq)
 {
 	if (irq < 0 || irq >= NR_IRQS)
-		return -1;
+		breakup();
 
 	REG_IRQ[1] = BIT(irq);
 	REG_IRQ[0] &= ~BIT(irq);
 	callbacks[irq] = NULL;
-	return 0;
 }
 
-static int
+static void
 irq_acknowledge(int irq)
 {
 	REG_IRQ[1] = BIT(irq);
-	return 0;
 }
 
 static int
@@ -59,11 +56,15 @@ void __attribute__((interrupt("IRQ")))
 _exception_irq(void)
 {
 	int pend;
+	uint32_t spsr = spsr_get(), cpsr = cpsr_get();
 	while((pend = irq_pending()) >= 0) {
 		irq_acknowledge(pend);
 
-		//int_enable(); NEED TO PRESERVE SPSR, TODO IN THE ASM VERSION
+		//int_enable();
+		cpsr_set(cpsr & ~SR_NOINT);
 		(callbacks[pend])(pend);
 		//int_disable();
+		cpsr_c_set(cpsr);
 	}
+	spsr_set(spsr);
 }

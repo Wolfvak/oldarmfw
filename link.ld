@@ -1,6 +1,6 @@
 OUTPUT_FORMAT("elf32-littlearm")
 OUTPUT_ARCH(arm)
-ENTRY(_start_reloc)
+ENTRY(reloc)
 
 MEMORY
 {
@@ -12,47 +12,47 @@ MEMORY
 
 SECTIONS
 {
-	.text.reloc : ALIGN(64)
+	.text.reloc : ALIGN(16)
 	{
 		KEEP(*(.text.reloc))
-		. = ALIGN(64);
+		. = ALIGN(16);
 	} >WRAM
 
-	.vector : ALIGN(64)
+	.vector : ALIGN(16)
 	{
 		__vector_lma = LOADADDR(.vector);
 		__vector_s = ABSOLUTE(.);
 		KEEP(*(.vector))
-		. = ALIGN(64);
+		. = ALIGN(16);
 		__vector_e = ABSOLUTE(.);
 	} >VECTOR AT>WRAM
 
-	.text : ALIGN(64)
+	.text : ALIGN(16)
 	{
 		__text_lma = LOADADDR(.text);
 		__text_s = ABSOLUTE(.);
 		*(.text*)
-		. = ALIGN(64);
+		. = ALIGN(16);
 		__text_e = ABSOLUTE(.);
 	} >ITCM AT>WRAM
 
-	.data : ALIGN(64)
+	.data : ALIGN(16)
 	{
 		__data_lma = LOADADDR(.data);
 		__data_s = ABSOLUTE(.);
 		*(.rodata*)
 		*(.data*)
-		. = ALIGN(64);
+		. = ALIGN(16);
 		__data_e = ABSOLUTE(.);
 	} >DTCM AT>WRAM
 
-	.bss (NOLOAD) : ALIGN(64)
+	.bss (NOLOAD) : ALIGN(16)
 	{
 		__bss_s = ABSOLUTE(.);
 		*(.bss*)
-		. = ALIGN(64);
+		. = ALIGN(16);
 		__bss_e = ABSOLUTE(.);
 	} >DTCM
 
-	. = ALIGN(64);
+	. = ALIGN(16);
 }

@@ -17,5 +17,10 @@ char *strcpy(char *dest, const char *src);
 int printf(const char *fmt, ...);
 int sprintf(char *str, const char *fmt, ...);
 
+static inline void
+breakup(void) {
+	__builtin_trap();
+}
+
 #define ASZ(x)	(sizeof(x) / sizeof(*(x)))
 #define BIT(x)	(1 << (x))

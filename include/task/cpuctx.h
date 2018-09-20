@@ -15,6 +15,7 @@ cpuctx_clear(cpuctx_t *ctx) {
 static inline void
 cpuctx_init(cpuctx_t *ctx, uint32_t sp, uint32_t pc, uint32_t psr) {
 	ctx->gpr[13] = sp;
+	ctx->gpr[14] = 0;
 	ctx->gpr[15] = pc;
 	ctx->cpsr = psr;
 }

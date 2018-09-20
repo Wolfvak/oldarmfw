@@ -1,10 +1,17 @@
 #include <asm.h>
 .align 2
 
-@ void load_sys_ctx(cpuctx_t *ctx)
+@ void sched_yield(void)
+@ gives up CPU control
+@ to the supervisor
+ARM_FUNC sched_yield
+	svc 0
+	bx lr
+
+@ void load_usr_ctx(cpuctx_t *ctx)
 @ preserves supervisor state and
 @ loads the new context in its place
-ARM_FUNC load_sys_ctx
+ARM_FUNC load_usr_ctx
 	@ preserve kernel state in SVC stack
 	mrs r3, cpsr
 	stmfd sp!, {r3-r11, lr}
@@ -12,7 +19,7 @@ ARM_FUNC load_sys_ctx
 	@ load task state
 	mov lr, r0
 
-	ldr r0, [lr, #16*4] @ load task CPSR
+	ldr r0, [lr, #16*4] @ load task PSR
 	msr spsr, r0
 
 	ldmia lr, {r0-r14}^	@ load task GPR
@@ -21,17 +28,28 @@ ARM_FUNC load_sys_ctx
 	movs pc, lr
 
 
-@ void restore_svc_kernel(void)
-@ loads the saved regs from stack
-ARM_FUNC restore_svc_kernel
-	ldmfd sp!, {r3-r11, lr}
-	msr cpsr, r3
+@ all SVC instructions come from user/system mode
+@ save registers R4-LR in active task
+@ and retore kernel state
+ARM_FUNC _exception_svc
+	mrs r0, spsr
+	ands r1, r0, #0xF
+	cmpne r1, #0xF
+	bne _svc_notusrsys		@ make sure the SVC was called from USR or SYS mode
+
+	ldr r1, =sched_active
+	ldr r1, [r1, #0x00]		@ cpu_state is at offset zero
+	str lr, [r1, #15*4]		@ preserve task PC
+	str r0, [r1, #16*4]		@ preserve task PSR
+
+	add r1, r1, #4*4
+	stmia r1, {r4-r14}^		@ preserve necessary GPRs
+
+	ldmfd sp!, {r3-r11, lr}	@ restore kernel state from stack
+	msr cpsr, r3			@ should've been saved in load_usr_ctx
 	bx lr
 
+_svc_notusrsys:
+	bkpt
 
-@ void sched_yield(void)
-@ gives up CPU control
-@ to the supervisor
-ARM_FUNC sched_yield
-	svc 0
-	bx lr
+.pool

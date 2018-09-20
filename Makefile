@@ -10,7 +10,7 @@ OC := $(TRIPLET)-objcopy
 
 INC  := -Iinclude
 
-BFLAGS := -DARM9 -marm -mno-thumb-interwork -mcpu=arm946e-s
+BFLAGS := -DARM9 -marm -mno-thumb-interwork -mcpu=arm946e-s -ggdb
 
 ASFLAGS := $(BFLAGS) $(INC) -x assembler-with-cpp
 CFLAGS  := $(BFLAGS) $(INC) -Wall -O2 -ffast-math -ffunction-sections \

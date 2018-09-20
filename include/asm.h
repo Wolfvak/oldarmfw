@@ -23,7 +23,6 @@
 	.arm
 	.align 2
 	.section .text.\f, "ax", %progbits
-
 	.global \f
 	.type \f, %function
 \f:
@@ -33,9 +32,16 @@
 	.thumb
 	.align 1
 	.section .text.\f, "ax", %progbits
-
 	.global \f
 	.type \f, %function
 \f:
+.endm
+
+.macro BSS_DATA d, l, a=0
+	.section .bss.\d
+	.align \a
+	.global \d
+	\d:
+	.space (\l)
 .endm
 #endif

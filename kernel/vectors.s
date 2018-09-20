@@ -17,7 +17,3 @@ _vectors_start:
 	_prefetch_vector: .word _exception_prefetch
 	ldr pc, _data_vector
 	_data_vector: .word _exception_data
-
-	.rept 4
-	bkpt
-	.endr

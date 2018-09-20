@@ -10,12 +10,6 @@ pxi_respond_sync(int irq)
 }
 
 void
-pxi_process_cmd(int irq)
-{
-	return;
-}
-
-void
 pxi_init(void)
 {
 	REG_PXI_CNT = PXI_SEND_CLEAR | PXI_FIFO_ERR | PXI_FIFO_ENABLE;
@@ -23,7 +17,6 @@ pxi_init(void)
 		pxi_recv();
 
 	irq_enable(INT_PXI_SYNC, pxi_respond_sync);
-	irq_enable(INT_PXI_RECV_NOT_EMPTY, pxi_process_cmd);
 
 	REG_PXI_SYNC_SEND = 0;
 	REG_PXI_SYNC_CNT = PXI_SYNC_IRQ;

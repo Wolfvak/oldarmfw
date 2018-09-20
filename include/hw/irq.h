@@ -1,6 +1,6 @@
 #pragma once
 
-#define INT_NDMA(n)		((n))
+#define INT_NDMA(n)		((n) + 0)
 #define INT_TIMER(n)	((n) + 8)
 
 #define INT_PXI_SYNC			(12)
@@ -14,5 +14,5 @@ typedef void (*irq_cb)(int);
 
 void irq_init(void);
 
-int irq_enable(int irq, irq_cb cb);
-int irq_disable(int irq);
+void irq_enable(int irq, irq_cb cb);
+void irq_disable(int irq);
