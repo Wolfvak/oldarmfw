@@ -60,3 +60,25 @@ pxi_sendbuf(const uint32_t *w, int c)
 			break;
 	}
 }
+
+static inline bool
+pxi_recv_full(void) {
+	return (REG_PXI_CNT & PXI_RECV_FULL);
+}
+
+static inline bool
+pxi_recv_empty(void) {
+	return (REG_PXI_CNT & PXI_RECV_EMPTY);
+}
+
+static inline bool
+pxi_send_full(void) {
+	return (REG_PXI_CNT & PXI_SEND_FULL);
+}
+
+static inline bool
+pxi_send_empty(void) {
+	return (REG_PXI_CNT & PXI_SEND_EMPTY);
+}
+
+void pxi_init(void);

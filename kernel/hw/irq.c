@@ -56,15 +56,8 @@ void __attribute__((interrupt("IRQ")))
 _exception_irq(void)
 {
 	int pend;
-	uint32_t spsr = spsr_get(), cpsr = cpsr_get();
 	while((pend = irq_pending()) >= 0) {
 		irq_acknowledge(pend);
-
-		//int_enable();
-		cpsr_set(cpsr & ~SR_NOINT);
 		(callbacks[pend])(pend);
-		//int_disable();
-		cpsr_c_set(cpsr);
 	}
-	spsr_set(spsr);
 }

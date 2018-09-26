@@ -13,7 +13,7 @@ void
 pxi_init(void)
 {
 	REG_PXI_CNT = PXI_SEND_CLEAR | PXI_FIFO_ERR | PXI_FIFO_ENABLE;
-	for (int i = 0; i < PXI_FIFO_WIDTH; i++)
+	while(!pxi_recv_empty())
 		pxi_recv();
 
 	irq_enable(INT_PXI_SYNC, pxi_respond_sync);

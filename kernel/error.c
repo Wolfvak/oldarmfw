@@ -3,15 +3,15 @@
 
 #include <task/cpuctx.h>
 
+extern uint32_t __text_s, __text_e;
+extern uint32_t __data_s, __data_e, __bss_s, __bss_e;
+
 static const char *source_strings[] = {
 	[XRQ_UNDEFINED] = "Undefined Instruction",
 	[XRQ_PREFETCH] = "Prefetch Abort",
 	[XRQ_DATA] = "Data Abort",
 	[XRQ_FIQ] = "FIQ"
 };
-
-extern uint32_t __text_s, __text_e;
-extern uint32_t __data_s, __data_e, __bss_s, __bss_e;
 
 static int
 check_inst_ptr(uint32_t *addr)
