@@ -17,9 +17,10 @@ char *strcpy(char *dest, const char *src);
 int printf(const char *fmt, ...);
 int sprintf(char *str, const char *fmt, ...);
 
-static inline void
+static inline void __attribute__((noreturn))
 breakup(void) {
 	__builtin_trap();
+	__builtin_unreachable();
 }
 
 #define ASZ(x)	(sizeof(x) / sizeof(*(x)))

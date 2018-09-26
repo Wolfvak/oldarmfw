@@ -7,14 +7,19 @@
 
 #define TASK_ENTRY __attribute__((naked)) __attribute__((noreturn))
 
+enum {
+	TASK_SLEEP,
+	TASK_AWAKE,
+};
+
 typedef struct {
 	cpuctx_t cpu_state;
 	const char *name;
+	int state;
 	cq_n node;
 } sched_task;
 
 extern sched_task *sched_active;
-extern int sched_taskn;
 
 typedef void (*task_pc)(sched_task*);
 

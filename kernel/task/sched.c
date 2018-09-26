@@ -24,9 +24,9 @@ task_default(sched_task *thistask)
 
 
 sched_task *sched_active;
-int sched_taskn;
 
-static cq_n *sched_last;
+static int sched_taskn;
+static cq_n *sched_lastnode;
 
 void load_usr_ctx(const cpuctx_t *ctx);
 
@@ -35,6 +35,7 @@ task_init(sched_task *t, uint32_t *sp, task_pc pc, const char *name)
 {
 	cpuctx_init(&t->cpu_state, t, sp, pc, SR_SYS);
 	t->name = name;
+	t->state = TASK_AWAKE;
 	CQ_INIT(&t->node);
 }
 
@@ -45,21 +46,21 @@ sched_init(void)
 
 	sched_taskn = 1;
 	sched_active = NULL;
-	sched_last = &deftsk.node;
+	sched_lastnode = &deftsk.node;
 }
 
 void
 sched_add(sched_task *t)
 {
-	cq_add(&t->node, sched_last);
-	sched_last = &t->node;
+	cq_add(&t->node, sched_lastnode);
+	sched_lastnode = &t->node;
 	sched_taskn++;
 }
 
 void
 sched_del(sched_task *t)
 {
-	sched_last = CQ_PREV(&t->node);
+	sched_lastnode = CQ_PREV(&t->node);
 	cq_remove(&t->node);
 	sched_taskn--;
 }
@@ -67,9 +68,32 @@ sched_del(sched_task *t)
 void
 sched_run(void)
 {
-	CQ_ITER(task_node, &deftsk.node) {
-		sched_active = CQ_DATA(task_node, sched_task, node);
-		load_usr_ctx(&sched_active->cpu_state);
-		sched_active = NULL;
+	cq_n *first;
+	int sleepcnt = 0;
+
+	first = &deftsk.node;
+	CQ_ITER(task_node, first) {
+		sched_task *t = CQ_DATA(task_node, sched_task, node);
+
+		switch(t->state) {
+			case TASK_AWAKE:
+				sched_active = t;
+				load_usr_ctx(&t->cpu_state);
+				sched_active = NULL;
+				break;
+
+			case TASK_SLEEP:
+				sleepcnt++;
+				break;
+
+			default:
+				breakup();
+		}
+
+		if (task_node == sched_lastnode) {
+			if (sleepcnt == sched_taskn)
+				wfi();
+			sleepcnt = 0;
+		}
 	}
 }
